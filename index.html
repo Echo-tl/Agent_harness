@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Research Agent</title>
+    <style>
+        :root {
+            --bg: #f4f6fb;
+            --card: #ffffff;
+            --border: #e5eaf2;
+            --text: #1f2a44;
+            --muted: #64748b;
+            --accent: #4f6df5;
+            --accent-2: #7c5cf0;
+            --shadow: 0 2px 10px rgba(15, 34, 74, 0.06);
+            --shadow-lg: 0 8px 28px rgba(15, 34, 74, 0.10);
+            /* 事件类型配色 */
+            --ev-plan: #3b82f6;
+            --ev-dispatch: #10b981;
+            --ev-report: #f59e0b;
+            --ev-clarify: #fb923c;
+            --ev-error: #ef4444;
+            --ev-complete: #10b981;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC",
+                         "Microsoft YaHei", sans-serif;
+            background:
+                radial-gradient(1200px 500px at 15% -10%, #e8edff 0%, transparent 55%),
+                radial-gradient(1000px 400px at 100% 0%, #fdeef4 0%, transparent 50%),
+                var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* ── 顶栏 ── */
+        header {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .logo {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            border-radius: 11px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 20px;
+            box-shadow: var(--shadow);
+        }
+        header h1 { font-size: 17px; font-weight: 700; letter-spacing: .2px; }
+        .sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+        .status {
+            display: inline-flex; align-items: center; gap: 7px;
+            font-size: 12px; color: var(--muted);
+            background: #f8fafc; border: 1px solid var(--border);
+            padding: 5px 12px; border-radius: 999px;
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,.18);
+        }
+
+        /* ── 聊天区 ── */
+        main {
+            flex: 1; overflow-y: auto; padding: 24px 28px 16px;
+            display: flex; flex-direction: column; gap: 12px;
+            max-width: 980px; width: 100%; margin: 0 auto;
+        }
+        .empty-hint {
+            margin: auto; text-align: center; color: var(--muted);
+            font-size: 14px;
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+        }
+        .empty-hint .big { font-size: 44px; }
+
+        /* 消息气泡 */
+        .msg {
+            max-width: 78%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            animation: fadeIn .25s ease;
+        }
+        .msg.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: #fff;
+            border-bottom-right-radius: 4px;
+            word-break: break-word;
+        }
+        .msg.agent {
+            align-self: flex-start;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 4px;
+        }
+        .msg.agent.report { max-width: 100%; }
+
+        .msg.plan      { border-left: 4px solid var(--ev-plan); }
+        .msg.dispatch  { border-left: 4px solid var(--ev-dispatch); }
+        .msg.complete  { border-left: 4px solid var(--ev-complete); }
+        .msg.clarify   { border-left: 4px solid var(--ev-clarify); }
+        .msg.error     { border-left: 4px solid var(--ev-error); }
+
+        /* 思考气泡（实时进度） */
+        .msg.thinking {
+            display: flex; align-items: center; gap: 9px;
+            color: var(--muted); font-size: 13px;
+            padding: 11px 16px;
+        }
+        .spinner {
+            width: 14px; height: 14px; flex: none;
+            border-radius: 50%;
+            border: 2px solid #dbe2f0; border-top-color: var(--accent);
+            animation: spin .8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .agent-head { font-size: 12.5px; color: var(--muted); margin-bottom: 6px; }
+        .msg.agent ul, .msg.agent ol { margin: 4px 0 0 20px; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── 报告 Markdown ── */
+        .report { font-size: 14px; color: #2b3550; }
+        .report h2 { font-size: 19px; margin: 18px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+        .report h3 { font-size: 16px; margin: 14px 0 6px; color: var(--accent); }
+        .report h4 { font-size: 14px; margin: 12px 0 4px; }
+        .report p  { margin: 6px 0; }
+        .report ul, .report ol { margin: 6px 0 6px 22px; }
+        .report li { margin: 3px 0; }
+        .report a  { color: var(--accent); text-decoration: none; word-break: break-all; }
+        .report a:hover { text-decoration: underline; }
+        .report table {
+            border-collapse: collapse; width: 100%; margin: 10px 0;
+            font-size: 13px; overflow: hidden; border-radius: 8px;
+        }
+        .report th, .report td {
+            border: 1px solid var(--border); padding: 7px 10px; text-align: left;
+        }
+        .report thead th { background: #f8fafc; color: var(--muted); font-weight: 600; }
+        .report tr:nth-child(even) td { background: #fafbfe; }
+        .report blockquote {
+            margin: 8px 0; padding: 8px 14px; border-left: 3px solid var(--accent);
+            background: #f8faff; color: var(--muted); border-radius: 0 8px 8px 0;
+        }
+        .report code {
+            background: #f1f4fb; color: #d6336c; padding: 2px 6px;
+            border-radius: 5px; font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+            font-size: 12.5px;
+        }
+        .report pre {
+            background: #0f172a; color: #e2e8f0; padding: 14px 16px; border-radius: 10px;
+            overflow-x: auto; margin: 10px 0; font-size: 12.5px;
+        }
+        .report pre code { background: none; color: inherit; padding: 0; }
+        .report hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+        /* ── 底部输入 ── */
+        footer {
+            position: sticky; bottom: 0;
+            background: rgba(255,255,255,.92);
+            backdrop-filter: blur(8px);
+            border-top: 1px solid var(--border);
+            padding: 14px 28px 18px;
+        }
+        .input-wrap {
+            max-width: 980px; margin: 0 auto;
+            display: flex; gap: 10px;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 8px;
+            box-shadow: var(--shadow-lg);
+            transition: border-color .18s ease, box-shadow .18s ease;
+        }
+        .input-wrap:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(79,109,245,.12), var(--shadow-lg);
+        }
+        input {
+            flex: 1; padding: 11px 14px; border: none; outline: none;
+            background: transparent; color: var(--text); font-size: 14px;
+        }
+        input::placeholder { color: #94a3b8; }
+        button {
+            padding: 11px 24px; border: none; border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: #fff; font-size: 14px; font-weight: 600; cursor: pointer;
+            transition: transform .12s ease, box-shadow .18s ease, opacity .2s;
+            box-shadow: 0 4px 14px rgba(79,109,245,.28);
+        }
+        button:hover { box-shadow: 0 6px 18px rgba(79,109,245,.36); }
+        button:active { transform: scale(.97); }
+        button:disabled { opacity: .55; cursor: not-allowed; }
+
+        #clarify-area {
+            max-width: 980px; margin: 0 auto;
+            background: #fff8f0; border: 1px solid #fde6c8;
+            border-radius: 14px; padding: 12px 16px;
+            display: none; flex-direction: column; gap: 10px;
+        }
+        #clarify-area p { font-size: 14px; color: #7c5c3a; }
+        #clarify-area .input-wrap { box-shadow: none; border-color: #f3d9b5; }
+
+        @media (max-width: 640px) {
+            main, footer { padding-left: 14px; padding-right: 14px; }
+            .brand .sub { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            <div class="logo">🔍</div>
+            <div>
+                <h1>Mini Research Agent</h1>
+                <p class="sub">多智能体深度研究报告 · 实时流式输出</p>
+            </div>
+        </div>
+        <div class="status"><span class="dot"></span>服务已连接</div>
+    </header>
+
+    <main id="events">
+        <div class="empty-hint" id="empty-hint">
+            <div class="big">🔍</div>
+            <div>输入你的问题开始研究<br>你的提问在右侧，Agent 的进度与报告显示在左侧</div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="input-wrap" id="input-area">
+            <input type="text" id="question" placeholder="输入你的问题，按 Enter 发送" autofocus>
+            <button id="send-btn">发送</button>
+        </div>
+        <div id="clarify-area">
+            <p id="clarify-question"></p>
+            <div class="input-wrap">
+                <input type="text" id="clarify-answer" placeholder="输入你的回复...">
+                <button id="clarify-btn">提交</button>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        let threadId = null;
+
+        const eventsEl    = document.getElementById("events");
+        const inputArea   = document.getElementById("input-area");
+        const clarifyArea = document.getElementById("clarify-area");
+        const questionEl  = document.getElementById("question");
+        const clarifyQ    = document.getElementById("clarify-question");
+        const clarifyAns  = document.getElementById("clarify-answer");
+        const sendBtn     = document.getElementById("send-btn");
+        const clarifyBtn  = document.getElementById("clarify-btn");
+        const emptyHint   = document.getElementById("empty-hint");
+
+        // ── 聊天气泡 ──
+        function scrollToBottom() {
+            eventsEl.scrollTop = eventsEl.scrollHeight;
+        }
+        function appendUserBubble(text) {
+            const div = document.createElement("div");
+            div.className = "msg user";
+            div.textContent = text;
+            eventsEl.appendChild(div);
+            scrollToBottom();
+        }
+
+        // 左侧"思考"气泡：progress 事件原地更新，不新增
+        let thinkingEl = null;
+        function setThinking(text) {
+            if (!thinkingEl) {
+                thinkingEl = document.createElement("div");
+                thinkingEl.className = "msg agent thinking";
+                thinkingEl.innerHTML = '<span class="spinner"></span><span class="think-text"></span>';
+                eventsEl.appendChild(thinkingEl);
+            }
+            thinkingEl.querySelector(".think-text").textContent = text;
+            scrollToBottom();
+        }
+        function endThinking() {
+            if (thinkingEl) { thinkingEl.remove(); thinkingEl = null; }
+        }
+
+        // ── 流读取（start + resume 共用）──
+        async function runStream(url) {
+            const response = await fetch(url, { method: "POST" });
+            threadId = response.headers.get("X-Thread-ID");
+
+            const reader  = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = "";
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split("\n");
+                buffer = lines.pop() || "";
+
+                for (const line of lines) {
+                    if (line.startsWith("data: ")) {
+                        try {
+                            const event = JSON.parse(line.slice(6));
+                            renderEvent(event);
+                            handleClarify(event);
+                        } catch (e) {
+                            console.error("parse error:", e);
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── 发起研究 ──
+        async function startResearch(question) {
+            await runStream(`/research?question=${encodeURIComponent(question)}`);
+        }
+
+        // ── 回复 clarify ──
+        async function resumeResearch(answer) {
+            await runStream(`/research/${threadId}/resume?answer=${encodeURIComponent(answer)}`);
+        }
+
+        // ── 事件渲染 ──
+        function renderEvent(event) {
+            if (emptyHint) emptyHint.style.display = "none";
+
+            // 进度事件 → 更新左侧思考气泡
+            if (event.type === "progress") {
+                setThinking(event.message || "");
+                return;
+            }
+            // 终态事件 → 收起思考气泡
+            if (["report", "clarify", "error", "complete"].includes(event.type)) {
+                endThinking();
+            }
+
+            const div = document.createElement("div");
+            div.className = `msg agent ${event.type}`;
+
+            switch (event.type) {
+                case "plan":
+                    div.innerHTML = `<div class="agent-head">📋 研究计划</div><p>${esc(event.research_brief || "")}</p>`;
+                    break;
+                case "dispatch":
+                    div.innerHTML = `<div class="agent-head">🔍 ${esc(event.message)}</div><ul>${(event.topics||[]).map(t => `<li>${esc(t)}</li>`).join("")}</ul>`;
+                    break;
+                case "report":
+                    div.innerHTML = `<div class="agent-head">📝 研究报告</div><div class="report">${simpleMarkdown(event.content || "")}</div>`;
+                    break;
+                case "complete":
+                    div.innerHTML = `<div class="agent-head">✅ ${esc(event.message)}</div>`;
+                    break;
+                case "clarify":
+                    div.innerHTML = `<div class="agent-head">❓ 需要您补充信息</div><p>${esc(event.question || "")}</p>`;
+                    break;
+                case "error":
+                    div.innerHTML = `<div class="agent-head">❌ ${esc(event.message)}</div>`;
+                    break;
+                default:
+                    div.innerHTML = esc(JSON.stringify(event));
+            }
+
+            eventsEl.appendChild(div);
+            scrollToBottom();
+        }
+
+        // ── clarify 追问处理 ──
+        function handleClarify(event) {
+            if (event.type === "clarify" && event.status === "waiting") {
+                inputArea.style.display = "none";
+                clarifyArea.style.display = "flex";
+                clarifyQ.textContent = event.question;
+                clarifyAns.focus();
+            }
+        }
+
+        // ── 工具函数 ──
+        function esc(s) {
+            return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+        }
+
+        // 轻量 Markdown 渲染：标题/表格/列表/引用/代码块/链接/加粗/行内代码
+        function simpleMarkdown(text) {
+            let s = esc(text);
+            const lines = s.split("\n");
+            const out = [];
+            let i = 0;
+
+            const inline = (t) => t
+                .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+                .replace(/`([^`]+)`/g, "<code>$1</code>")
+                .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+                .replace(/\*([^*]+)\*/g, "<em>$1</em>");
+
+            const isSep = (r) => /^\s*\|[\s|:\-]+\|\s*$/.test(r) || /^\s*[-:|\s]+$/.test(r) && r.includes("|");
+
+            while (i < lines.length) {
+                const line = lines[i];
+
+                if (!line.trim()) { i++; continue; }
+
+                // 表格
+                if (line.trim().startsWith("|")) {
+                    const rows = [];
+                    while (i < lines.length && lines[i].trim().startsWith("|")) {
+                        rows.push(lines[i].trim());
+                        i++;
+                    }
+                    const cells = (r) => r.replace(/^\||\|$/g, "").split("|").map(c => c.trim());
+                    const header = cells(rows[0]);
+                    const body = rows.slice(1).filter(r => !isSep(r)).map(cells);
+                    let tbl = "<table><thead><tr>" + header.map(c => `<th>${inline(c)}</th>`).join("") + "</tr></thead><tbody>";
+                    tbl += body.map(r => "<tr>" + r.map(c => `<td>${inline(c)}</td>`).join("") + "</tr>").join("");
+                    tbl += "</tbody></table>";
+                    out.push(tbl);
+                    continue;
+                }
+
+                // 代码块
+                if (line.trim().startsWith("```")) {
+                    const buf = [];
+                    i++;
+                    while (i < lines.length && !lines[i].trim().startsWith("```")) { buf.push(lines[i]); i++; }
+                    i++;
+                    out.push(`<pre><code>${buf.join("\n")}</code></pre>`);
+                    continue;
+                }
+
+                // 标题
+                const h = line.match(/^(#{1,4})\s+(.*)$/);
+                if (h) {
+                    const lvl = Math.min(h[1].length + 1, 6);
+                    out.push(`<h${lvl}>${inline(h[2])}</h${lvl}>`);
+                    i++;
+                    continue;
+                }
+
+                // 分隔线
+                if (/^\s*[-*_=]{3,}\s*$/.test(line)) { out.push("<hr>"); i++; continue; }
+
+                // 引用
+                if (line.trim().startsWith(">")) {
+                    const buf = [];
+                    while (i < lines.length && lines[i].trim().startsWith(">")) {
+                        buf.push(lines[i].trim().replace(/^>\s?/, ""));
+                        i++;
+                    }
+                    out.push(`<blockquote>${inline(buf.join("<br>"))}</blockquote>`);
+                    continue;
+                }
+
+                // 无序列表
+                if (/^\s*[-*]\s+/.test(line)) {
+                    const items = [];
+                    while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) {
+                        items.push(inline(lines[i].replace(/^\s*[-*]\s+/, "")));
+                        i++;
+                    }
+                    out.push(`<ul>${items.map(x => `<li>${x}</li>`).join("")}</ul>`);
+                    continue;
+                }
+
+                // 有序列表
+                if (/^\s*\d+[.)]\s+/.test(line)) {
+                    const items = [];
+                    while (i < lines.length && /^\s*\d+[.)]\s+/.test(lines[i])) {
+                        items.push(inline(lines[i].replace(/^\s*\d+[.)]\s+/, "")));
+                        i++;
+                    }
+                    out.push(`<ol>${items.map(x => `<li>${x}</li>`).join("")}</ol>`);
+                    continue;
+                }
+
+                // 段落
+                out.push(`<p>${inline(line)}</p>`);
+                i++;
+            }
+            return out.join("\n");
+        }
+
+        // ── 按钮绑定 ──
+        sendBtn.addEventListener("click", () => {
+            const q = questionEl.value.trim();
+            if (!q) return;
+            questionEl.value = "";
+            appendUserBubble(q);              // 提问显示在右侧
+            sendBtn.disabled = true;
+            startResearch(q).finally(() => { sendBtn.disabled = false; });
+        });
+
+        questionEl.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") sendBtn.click();
+        });
+
+        clarifyBtn.addEventListener("click", () => {
+            const a = clarifyAns.value.trim();
+            if (!a) return;
+            clarifyAns.value = "";
+            appendUserBubble(a);              // 追问回答也显示在右侧
+            clarifyArea.style.display = "none";
+            inputArea.style.display = "flex";
+            resumeResearch(a);
+        });
+
+        clarifyAns.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") clarifyBtn.click();
+        });
+    </script>
+</body>
+</html>

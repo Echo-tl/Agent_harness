@@ -1,0 +1,36 @@
+# ── 环境变量（含密钥，绝不入库）──
+.env
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# ── 运行时产物（可再生，不入库）──
+*.db
+*.sqlite
+chroma_db/
+reports/
+workspace/
+benchmarks/results/
+
+# ── 调试 / 临时文件 ──
+*.log
+*.tmp
+logs.txt
+output.txt
+response_*.txt
+SEARCH_CALLED.txt
+task_called.txt
+task_error.txt
+HELLO_CALLED.txt
+.pytest_tmp*/
+.pytest_tmp2/
+
+# ── IDE ──
+.vscode/
+.idea/

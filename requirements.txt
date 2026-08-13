@@ -1,0 +1,34 @@
+# ── 核心框架 ──
+langgraph>=0.2.0
+langgraph-checkpoint-sqlite>=2.0.0   # AsyncSqliteSaver（checkpoints.db），独立于 langgraph
+langchain>=0.3.0
+langchain-core>=0.3.0
+langchain-openai>=0.2.0
+langchain-text-splitters>=0.3.0
+openai>=1.0.0
+
+# ── 存储 / 检索 ──
+chromadb>=0.4.0
+tavily-python>=0.5.0
+
+# ── 网络 / 解析 ──
+aiohttp>=3.9.0
+beautifulsoup4>=4.12.0
+numpy>=1.26.0
+json-repair>=0.25.0
+
+# ── Web 服务 ──
+fastapi>=0.110.0
+uvicorn>=0.29.0
+python-multipart>=0.0.9
+
+# ── 配置 / 模型 ──
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+
+# ── 测试 ──
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+
+# ── 可选：MCP 工具接入（未安装时相关功能自动禁用）──
+# langchain-mcp-adapters>=0.1.0

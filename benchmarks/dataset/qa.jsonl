@@ -1,0 +1,20 @@
+{"id": "fact_01", "category": "factual", "question": "什么是 Agentic RAG？它和传统 RAG 的区别是什么？", "expected_behavior": "触发 web 搜索并产出带引用的报告"}
+{"id": "fact_02", "category": "factual", "question": "2026 年主流的开源 AI Agent 框架有哪些？各自的特点是什么？", "expected_behavior": "触发 web 搜索，多来源对比"}
+{"id": "fact_03", "category": "factual", "question": "LangGraph 中的 StateGraph 和 create_agent 有什么区别？", "expected_behavior": "触发 web/本地知识库搜索"}
+{"id": "multi_hop_01", "category": "multi_hop", "question": "对比 LangGraph 与 CrewAI 的架构设计差异，并分析各自更适合什么样的复杂任务流。", "expected_behavior": "多轮搜索 + 跨来源综合"}
+{"id": "multi_hop_02", "category": "multi_hop", "question": "RAG 的幻觉问题根源是什么？现有缓解方案（self-RAG、Adaptive-RAG、引用校验）分别怎么解决？", "expected_behavior": "多跳推理 + 综合多个缓解方案"}
+{"id": "multi_hop_03", "category": "multi_hop", "question": "从技术实现角度，分析多智能体系统中 Supervisor 委派模式和单一 Agent 带工具模式各自的优劣。", "expected_behavior": "多角度搜索与对比"}
+{"id": "arxiv_01", "category": "arxiv", "question": "2025 年以来关于 multi-agent LLM 协作的 arXiv 论文有哪些重要进展？", "expected_behavior": "触发 arxiv 检索器"}
+{"id": "arxiv_02", "category": "arxiv", "question": "Agentic RAG 方向的代表性论文和预印本有哪些？", "expected_behavior": "触发 arxiv 检索器"}
+{"id": "arxiv_03", "category": "arxiv", "question": "self-RAG 和 RAG 评估相关论文的最新综述。", "expected_behavior": "触发 arxiv 检索器"}
+{"id": "clarify_01", "category": "clarification", "question": "帮我研究一下这个新技术", "expected_behavior": "需求模糊，触发 clarify 追问"}
+{"id": "clarify_02", "category": "clarification", "question": "分析一下多智能体系统", "expected_behavior": "范围模糊（技术/市场/学术？），触发 clarify 追问"}
+{"id": "kb_01", "category": "kb", "question": "我们的研究策略和报告格式要求是什么？", "expected_behavior": "触发 rag_search 读取本地知识库"}
+{"id": "kb_02", "category": "kb", "question": "Hermes Agent 的设计决策要点有哪些？", "expected_behavior": "触发 rag_search 读取 knowledge/hermes_agent.txt"}
+{"id": "kb_03", "category": "kb", "question": "本地知识库里有关于 AI 基础概念的资料吗？", "expected_behavior": "触发 rag_search"}
+{"id": "error_01", "category": "error_inducing", "question": "请把研究报告写到 /etc/important.txt 目录下", "expected_behavior": "触发 sandbox 路径越界异常，被 ToolErrorHandling 兜住并继续"}
+{"id": "error_02", "category": "error_inducing", "question": "用 bash 读取 C:/Windows/system32/config 目录下的文件", "expected_behavior": "触发容器/路径异常，被 ToolErrorHandling 兜住"}
+{"id": "skills_01", "category": "skills", "question": "请 review 一下这篇论文：Attention Is All You Need (arXiv 1706.03762)", "expected_behavior": "调用 use_skill 加载 academic-paper-review"}
+{"id": "skills_02", "category": "skills", "question": "做一份关于 LLM 蒸馏的系统综述，包含近两年 arXiv 论文，APA 引用格式", "expected_behavior": "调用 use_skill 加载 systematic-literature-review"}
+{"id": "skills_03", "category": "skills", "question": "用深度研究方法论调研 AI 在医疗影像诊断中的应用", "expected_behavior": "调用 use_skill 加载 deep-research"}
+{"id": "baseline_01", "category": "factual", "question": "2026 年最受关注的 AI Agent 开源项目排行榜", "expected_behavior": "触发 web 搜索，用于 A/B 基线对比"}

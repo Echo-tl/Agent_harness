@@ -1,0 +1,18 @@
+# Hermes Agent 简介
+
+Hermes Agent 是一个轻量级、可扩展的研究助理智能体框架，设计用于自动化信息收集、分析和报告生成。
+
+## 核心特性
+- **混合检索**：支持本地知识库（RAG）与 Web 搜索（Tavily）并行或串行调用，由 LLM 动态决策。
+- **模块化节点**：基于 LangGraph 构建，包含 Planner、Supervisor、Researcher、Reflector、Reporter 等角色节点。
+- **记忆机制**：使用短期会话记忆和长期向量记忆，支持跨会话知识复用。
+- **多模型兼容**：可接入 OpenAI、Anthropic、DashScope（通义千问）等多种 LLM。
+
+## 内部设计决策（仅供内部参考）
+- 在 v10 版本中，Researcher 仅使用 Tavily Web Search。v11 版本引入 RAG 作为并列工具，使 Agent 能够优先查阅历史项目文档、内部规范等私有知识。
+- Embedding 采用本地 sentence-transformers (`all-MiniLM-L6-v2`) 原型，后期可切换至 DashScope `text-embedding-v3`。
+- 向量数据库选用 Chroma，无需外部服务，持久化到本地目录。
+
+## 已知限制
+- 长文档（超过 2000 token）需先切片，切片策略当前为按段落切，最大 512 token。
+- 混合检索的合并排序尚简单，仅做去重和相关性分数加权（本地分数 0.7，Web 分数 0.3）。
