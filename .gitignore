@@ -30,6 +30,7 @@ task_error.txt
 HELLO_CALLED.txt
 .pytest_tmp*/
 .pytest_tmp2/
+repo-visuals-work/
 
 # ── IDE ──
 .vscode/

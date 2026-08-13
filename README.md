@@ -1,5 +1,9 @@
 # Agent Harness · Mini-DeerFlow-Agent
 
+<p align="center">
+  <img src="assets/hero.gif" alt="Agent Harness 演示：一个问题 → 多智能体 + Skills → 带引用的研究报告" width="100%">
+</p>
+
 基于 **LangGraph** 的多智能体深度研究报告系统：输入一个问题，自动完成**任务拆解 → 多源检索 → 证据压缩 → 带引用报告的生成**，全程 SSE 实时流式输出。
 
 > 定位：把"问一个问题 → 得到一份带可点击来源、可校验引用的 Markdown 研究报告"做成一个工程化的 Agent 系统——不只是跑通，还要**并发安全、有资源上限、可评测、可扩展**。
